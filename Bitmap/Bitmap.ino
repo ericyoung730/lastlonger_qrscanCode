@@ -3,12 +3,14 @@
 #include "U8glib.h"
 #include <String.h>
 #include  <SoftwareSerial.h>
-SoftwareSerial QRSerial(8,9); // RX 、 TX
-
+#include <AltSoftSerial.h>
+AltSoftSerial QRSerial;
+//SoftwareSerial QRSerial(8,9); // RX 、 TX
+unsigned long curtime=0;
+int interval =3000; 
+char disp[4];
 U8GLIB_ST7920_128X64_4X u8g(13, 11, 10);  // SPI Com: SCK = en = 18, MOSI = rw = 16, CS = di = 17
-
-
-
+int scan=0;
 const unsigned char bitmap_zero[] PROGMEM = {
   0x00,0x00, // ................
   0x00,0x00, // ................
@@ -445,17 +447,73 @@ void drawURL(void)
   u8g.drawStr(60,30,"1236");
   
 }
+void drawOne(void)
+{
+  u8g.drawBitmapP( 40, 2, 2, 24, bitmap_zero);
+  
+}
 void draw(void) {
-  // graphic commands to redraw the complete screen should be placed here  
+  
+  if(scan==1)
+  {
+    
+    // graphic commands to redraw the complete screen should be placed here  
   u8g.drawBitmapP( 0, 2, 3, 24, bitmap_check);
   u8g.drawBitmapP( 24, 2, 2, 24, bitmap_sharp);
-  u8g.drawBitmapP( 40, 2, 2, 24, bitmap_one);
-  u8g.drawBitmapP( 56, 2, 2, 24, bitmap_two);
-  u8g.drawBitmapP( 72, 2, 2, 24, bitmap_three);
-  u8g.drawBitmapP( 88, 2, 2, 24, bitmap_four);
+  switch(disp[0]){
+    case '0': u8g.drawBitmapP( 40, 2, 2, 24, bitmap_zero);break;
+    case '1': u8g.drawBitmapP( 40, 2, 2, 24, bitmap_one); break;
+    case '2': u8g.drawBitmapP( 40, 2, 2, 24, bitmap_two); break;
+    case '3': u8g.drawBitmapP( 40, 2, 2, 24, bitmap_three); break;
+    case '4': u8g.drawBitmapP( 40, 2, 2, 24, bitmap_four); break;
+    case '5': u8g.drawBitmapP( 40, 2, 2, 24, bitmap_five); break;
+    case '6': u8g.drawBitmapP( 40, 2, 2, 24, bitmap_six); break;
+    case '7': u8g.drawBitmapP( 40, 2, 2, 24, bitmap_seven); break;
+    case '8': u8g.drawBitmapP( 40, 2, 2, 24, bitmap_eight); break;
+    case '9': u8g.drawBitmapP( 40, 2, 2, 24, bitmap_nine); break;
+    default:drawOne;
+  }
+  switch(disp[1]){
+    case '0': u8g.drawBitmapP( 56, 2, 2, 24, bitmap_zero);break;
+    case '1': u8g.drawBitmapP( 56, 2, 2, 24, bitmap_one); break;
+    case '2': u8g.drawBitmapP( 56, 2, 2, 24, bitmap_two); break;
+    case '3': u8g.drawBitmapP( 56, 2, 2, 24, bitmap_three); break;
+    case '4': u8g.drawBitmapP( 56, 2, 2, 24, bitmap_four); break;
+    case '5': u8g.drawBitmapP( 56, 2, 2, 24, bitmap_five); break;
+    case '6': u8g.drawBitmapP( 56, 2, 2, 24, bitmap_six); break;
+    case '7': u8g.drawBitmapP( 56, 2, 2, 24, bitmap_seven); break;
+    case '8': u8g.drawBitmapP( 56, 2, 2, 24, bitmap_eight); break;
+    case '9': u8g.drawBitmapP( 56, 2, 2, 24, bitmap_nine); break;
+  }
+  switch(disp[2]){
+    case '0': u8g.drawBitmapP( 72, 2, 2, 24, bitmap_zero);break;
+    case '1': u8g.drawBitmapP( 72, 2, 2, 24, bitmap_one); break;
+    case '2': u8g.drawBitmapP( 72, 2, 2, 24, bitmap_two); break;
+    case '3': u8g.drawBitmapP( 72, 2, 2, 24, bitmap_three); break;
+    case '4': u8g.drawBitmapP( 72, 2, 2, 24, bitmap_four); break;
+    case '5': u8g.drawBitmapP( 72, 2, 2, 24, bitmap_five); break;
+    case '6': u8g.drawBitmapP( 72, 2, 2, 24, bitmap_six); break;
+    case '7': u8g.drawBitmapP( 72, 2, 2, 24, bitmap_seven); break;
+    case '8': u8g.drawBitmapP( 72, 2, 2, 24, bitmap_eight); break;
+    case '9': u8g.drawBitmapP( 72, 2, 2, 24, bitmap_nine); break;
+  }
+  switch(disp[3]){
+    case '0': u8g.drawBitmapP( 88, 2, 2, 24, bitmap_zero);break;
+    case '1': u8g.drawBitmapP( 88, 2, 2, 24, bitmap_one); break;
+    case '2': u8g.drawBitmapP( 88, 2, 2, 24, bitmap_two); break;
+    case '3': u8g.drawBitmapP( 88, 2, 2, 24, bitmap_three); break;
+    case '4': u8g.drawBitmapP( 88, 2, 2, 24, bitmap_four); break;
+    case '5': u8g.drawBitmapP( 88, 2, 2, 24, bitmap_five); break;
+    case '6': u8g.drawBitmapP( 88, 2, 2, 24, bitmap_six); break;
+    case '7': u8g.drawBitmapP( 88, 2, 2, 24, bitmap_seven); break;
+    case '8': u8g.drawBitmapP( 88, 2, 2, 24, bitmap_eight); break;
+    case '9': u8g.drawBitmapP( 88, 2, 2, 24, bitmap_nine); break;
+  }
   u8g.drawBitmapP( 104, 2, 3, 24, bitmap_check);
   u8g.drawBitmapP( 0, 30, 16, 32, bitmap_text);
   
+  }
+ 
 }
 
 void setup(void) {
@@ -464,6 +522,7 @@ void setup(void) {
 }
 
 void loop(void) {
+  
   // picture loop
   char c=' ';
   String data="";
@@ -472,6 +531,7 @@ void loop(void) {
     draw();
     //drawURL();
   } while( u8g.nextPage() );
+  
   while(QRSerial.available())
 {
   c=QRSerial.read();
@@ -484,15 +544,25 @@ void loop(void) {
 }
 if(data!="\0")
 {
-  Serial.println(data);
-  Serial.println(data.length());
+  scan=1;
+  curtime=millis();
+ // Serial.println(data);
+ // Serial.println(data.length());
 char datachar[data.length()+1];
 data.toCharArray(datachar,data.length()+1);
 for(int i=25;datachar[i]!='\0';i++)
-Serial.print(datachar[i]); // 25-28
-
-Serial.println();
+{
+//Serial.print(datachar[i]); // 25-28
+disp[i-25]=datachar[i];
+//Serial.print(disp[i-25]); // 25-28
+//Serial.println();
 }
   // rebuild the picture after some delay
   
+}
+if(millis()-curtime>interval)
+{
+  if(scan==1)
+  scan=0;
+}
 }
