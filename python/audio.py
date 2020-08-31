@@ -2,8 +2,9 @@ import wiringpi
 import time, sys
 
 PIN = 18
-BEAT = 0.25
-DELAY = 0.01
+BEAT = 0.05
+
+DELAY = 0.1
 
 # NOTE TYPES
 
@@ -97,8 +98,8 @@ A0_SHARP	=	int(29.1352)
 A0			=	int(27.5000)
 
 music = [(C4, BEAT), (C4, BEAT), (C4, BEAT), (0, (BEAT/2)), (C4, BEAT), (B3, BEAT), (A3, BEAT), (B3, BEAT), (C4, BEAT), (D4, BEAT), (0, (BEAT/2)), (E4, BEAT), (E4, BEAT), (E4, BEAT), (0, (BEAT/2)), (E4, BEAT), (D4, BEAT), (C4, BEAT), (D4, BEAT), (E4, BEAT), (F4, BEAT), (0, (BEAT/2)), (G4, BEAT), (C4, BEAT), (0, (BEAT/2)), (A4, BEAT), (G4, BEAT), (F4, BEAT), (E4,BEAT), (D4,BEAT), (C4,BEAT)]
-correct=[(C7,BEAT)]
-incorrect=[(A3,BEAT)]
+correct=[(A0,0.1)]
+incorrect=[(C4,0.1),(C4,0.2)]
 def setup_gpio():
 	wiringpi.wiringPiSetupGpio() # setup wiring pi to use BCM pin numbers
 	success = wiringpi.softToneCreate(PIN) # Attempt to set up pin 18
@@ -116,10 +117,9 @@ def play_note(note, length=BEAT):
 try:
 	setup_gpio()
 	
-	while True:
-        for n in incorrect:
-            play_note(n[0], n[1])
-		
-		time.sleep(5)
+#	while True:
+#		for n in incorrect:
+#			play_note(n[0], n[1])		
+#		time.sleep(1)
 except KeyboardInterrupt:
 	print "User interrupted program."

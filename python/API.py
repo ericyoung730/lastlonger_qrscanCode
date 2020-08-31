@@ -16,13 +16,18 @@ class Uri:
     returnContainer = '/containers/return/'
     lendContainer = '/containers/rent/'
     usedAmount = '/stores/usedAmount'
+    reloadContainer = '/containers/readyToClean/'
+    createStockBox = '/deliveryList/stock'
+    modifyDeliveryBoxInfo = '/deliveryList/modifyBoxInfo/'
+    signDeliveryBox = '/deliveryList/sign'
+    modifyDeliveryBoxState = '/deliveryList/changeState'
 
-class Api:    
-    ver = 'test'
+class Api:
+    ver = '/v6'
 
     def __init__(self):
-        self.apiKey = '0ad1995bbd'
-        self.secretKey = 'DgA/uuv8ZgO0dOWG'
+        self.apiKey = 'e4e50ec94f'
+        self.secretKey = 'XGt3u2KrRyTIqK69'
 
     def setAuthorization(self, apiKey, secretKey):
         '''
@@ -40,7 +45,7 @@ class Api:
         '''
         headers = {'reqID': randHex(10), 'reqTime': str(time.time()*1000) }
         body = { 'phone': username, 'password': password}
-        r = requests.post(baseUrl+'/'+self.ver+Uri.login, data = body, headers = headers)
+        r = requests.post(baseUrl+self.ver+Uri.login, data = body, headers = headers)
         encoded = r.headers['Authorization']
         payload = jwt.decode(encoded, algorithms=['HS256'], verify=False)
         self.secretKey = payload['roles']['clerk']['secretKey']
@@ -51,36 +56,48 @@ class Api:
         '''
         Description   - Fetch crucial information used for connecting to server websocket
         Parameters    - N/A
-        Retrun values - status code(number), 
+        Retrun values - status code(number),
                         token(string)
-                        real uri(string)                         
+                        real uri(string)
         '''
         headers = { 'Authorization': Jwt.standard(self.secretKey), 'apiKey': self.apiKey }
-        r = requests.get(baseUrl+'/'+self.ver+Uri.socketToken, headers = headers)
+        r = requests.get(baseUrl+self.ver+Uri.socketToken, headers = headers)
         json = r.json()
-        print(json)
         (token, uri) = (json['token'], json['uri'])
         return (r.status_code, token, uri)
 
-    def returnContainer(self, id):
+    def reloadContainer(self, id, storeId):
+        '''
+        Discription   - Mark a container as clean after used
+        Parameters    - id: containerId
+                        storeId: the id of the store where the container used to belong
+                        date: timestamps of the action
+        Return values - status code(number)
+        '''
+        headers = {'Authorization': Jwt.addDate(self.secretKey), 'apiKey': self.apiKey, 'Content-Type': 'application/json'}
+        r = requests.post(baseUrl+self.ver+Uri.reloadContainer+str(id), headers = headers, json={'storeId': storeId})
+        return r.status_code
+
+    def returnContainer(self, id, storeId):
         '''
         Description   - Mark a container as taken back from an user
         Parameters    - id: containerId
+                        storeId: the id of the store you belong
         Return values - status code(number)
                         previous host(string)
                         container id(string)
                         container type(string)
         '''
         headers = {'Authorization': Jwt.addDate(self.secretKey), 'apiKey': self.apiKey, 'Content-Type': 'application/json'}
-        r = requests.post(baseUrl+'/'+self.ver+Uri.returnContainer+str(id), headers = headers, json={'storeId': 17})
+        r = requests.post(baseUrl+self.ver+Uri.returnContainer+str(id), headers = headers)
         if r.status_code == 200:
             if (r.json()['message'] == 'Already Return'):
-                return (r.status_code, user, None, None)
+                return (r.status_code,r.json()['message'])
             container = r.json()['containerList'][0]
             user = r.json()['oriUser']
             return (r.status_code, user, str(container['id']), container['typeName'])
         else:
-            return (r.status_code, '', '', '')
+            return (r.status_code, r.json()['message'])
 
     def rentContainer(self, id, userApiKey):
         '''
@@ -90,9 +107,59 @@ class Api:
         Return values - status code(number)
         '''
         headers = {'Authorization': Jwt.addDate(self.secretKey), 'apiKey': self.apiKey, 'userApiKey': userApiKey}
-        r = requests.post(baseUrl+'/'+self.ver+Uri.lendContainer+str(id), headers=headers)
+        r = requests.post(baseUrl+self.ver+Uri.lendContainer+str(id), headers=headers)
         return (r.status_code)
 
+    def createDeliveryStockBox(self, ids):
+        '''
+        Descriptions    - Create a stocked delivery box
+        Parameters      - ids: id of containers for stocking
+        Return values   - status code(number)
+        '''
+        headers = {'Authorization': Jwt.standard(self.secretKey), 'apiKey': self.apiKey, 'Content-Type': 'application/json'}
+        r = requests.post(baseUrl+self.ver+Uri.createStockBox, headers=headers, json={'phone': '', 'boxList': [{'boxName': '', 'containerList': ids}]})
+        return (r.status_code)
+
+    def modifyDeliveryBoxDestination(self, boxId, storeId):
+        '''
+        Description    - modify destination of the box
+        Parameters     - boxId: the id of the target box
+                         storeId: new destination
+        Return values  - status code(number)
+        '''
+        return self.modifyDeliveryBoxInfo(boxId, {"storeID": storeId})
+
+    def modifyDeliveryBoxInfo(self, boxId, body):
+        '''
+        Description    - modify info of the box
+        Parameters     - boxId: the id of the target box
+                         body: new info
+        Return values  - status code(number)
+        '''
+        headers = {'Authorization': Jwt.standard(self.secretKey), 'apiKey': self.apiKey, 'Content-Type': 'application/json'}
+        r = requests.post(baseUrl+self.ver+Uri.modifyDeliveryBoxInfo+str(boxId), headers=headers, json=body)
+        return (r.status_code)
+
+    def modiftDeliveryBoxState(self, boxId, newState):
+        '''
+        Description     - modify state of the box
+        Parameters      - boxId: the id of the box
+                          newState: the new state of the box
+        Return values   - status code(number)
+        '''
+        headers = {'Authorization': Jwt.standard(self.secretKey), 'apiKey': self.apiKey, 'Content-Type': 'application/json'}
+        r = requests.post(baseUrl+self.ver+Uri.modifyDeliveryBoxState, headers=headers, json={'phone': "", 'boxList':[{'id':str(boxId), 'newState': newState}]})
+        return (r.status_code)
+
+    def signDeliveryBox(self, boxId):
+        '''
+        Description   - sign the =box
+        Parameters    - boxId: target box
+        Return values - status code(number)
+        '''
+        headers = {'Authorization': Jwt.standard(self.secretKey), 'apiKey': self.apiKey, 'Content-Type': 'application/json'}
+        r = requests.post(baseUrl+self.ver+Uri.signDeliveryBox, headers=headers, json={'phone': "", 'boxList': [{"ID": str(boxId)}]})
+        return (r.status_code)
 
     def fetchUserToken(self, user):
         '''
@@ -102,7 +169,7 @@ class Api:
                         api key(string)
         '''
         headers = {'Authorization': Jwt.standard(self.secretKey), 'apiKey': self.apiKey}
-        r = requests.get(baseUrl+'/'+self.ver+Uri.userToken+user, headers = headers)
+        r = requests.get(baseUrl+self.ver+Uri.userToken+user, headers = headers)
         if r.status_code == 200:
             json = r.json()
             return (r.status_code, json['apiKey'])
@@ -117,8 +184,9 @@ class Api:
                         total amount of used containers(number)
         '''
         headers = {'Authorization': Jwt.standard(self.secretKey), 'apiKey': self.apiKey}
-        r = requests.get(baseUrl+'/'+self.ver+Uri.usedAmount, headers = headers)
+        r = requests.get(baseUrl+self.ver+Uri.usedAmount, headers = headers)
         json = r.json()
+        print(json)
         storeRecords = json['store']
 
         total = 0
